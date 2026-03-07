@@ -1,0 +1,152 @@
+:root {
+  --board-rows: 0;
+  --board-columns: 12;
+  --board-width: 0;
+  --board-card-width: 1;
+  --board-card-height: 1;
+  --board-card-position-x: 0;
+  --board-card-position-y: 0;
+  --board-card-resize-color: blue;
+}
+
+.boardCard {
+  position: absolute;
+  top: calc(var(--board-row-height) * var(--board-card-position-y));
+  left: calc(
+    var(--board-width) /
+    var(--board-columns) *
+    var(--board-card-position-x)
+  );
+  box-sizing: border-box;
+  width: calc(
+    var(--board-width) /
+    var(--board-columns) *
+    var(--board-card-width)
+  );
+  height: calc(var(--board-row-height) * var(--board-card-height));
+  background-color: rgba(0, 0, 0, 0.2);
+  transition: all;
+}
+
+.boardGrid {
+  --board-width: calc(100cqw);
+  --board-column-width: calc(var(--board-width) / var(--board-columns));
+  --board-row-height: var(--board-column-width);
+  position: relative;
+  height: calc(var(--board-row-height) * var(--board-rows));
+  font-size: calc(var(--board-row-height) * 0.15);
+  background-color: rgba(200, 255, 200, 0.5);
+}
+
+.boardCardDrag {
+  opacity: 0.5;
+}
+
+.boardGridOuter {
+  container-type: inline-size;
+}
+
+.boardCardPreview {
+  position: absolute;
+  top: calc(var(--board-row-height) * var(--board-card-position-y));
+  left: calc(
+    var(--board-width) /
+    var(--board-columns) *
+    var(--board-card-position-x)
+  );
+  z-index: 1;
+  box-sizing: border-box;
+  width: calc(
+    var(--board-width) /
+    var(--board-columns) *
+    var(--board-card-width)
+  );
+  height: calc(var(--board-row-height) * var(--board-card-height));
+  pointer-events: none;
+}
+
+.boardCardPreviewInner {
+  box-sizing: border-box;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(255, 0, 0, 0.2);
+  box-shadow: 0 0 10px rgba(255, 0, 0, 0.2);
+}
+
+.boardCardResize {
+  opacity: 1;
+}
+
+.boardCardResizeCorner {
+  position: absolute;
+  z-index: 1;
+  width: 5px;
+  height: 5px;
+  border: none;
+  border-color: var(--board-card-resize-color);
+  border-width: 2px;
+}
+
+.boardCardResizeBottomRight {
+  right: 0;
+  bottom: 0;
+  cursor: nwse-resize;
+  border-right-style: solid;
+  border-bottom-style: solid;
+}
+
+.boardCardResizeBottomLeft {
+  bottom: 0;
+  left: 0;
+  cursor: nesw-resize;
+  border-bottom-style: solid;
+  border-left-style: solid;
+}
+
+.boardCardResizeTopRight {
+  top: 0;
+  right: 0;
+  cursor: nesw-resize;
+  border-top-style: solid;
+  border-right-style: solid;
+}
+
+.boardCardResizeTopLeft {
+  top: 0;
+  left: 0;
+  cursor: nwse-resize;
+  border-top-style: solid;
+  border-left-style: solid;
+}
+
+.boardCardResizeTop {
+  top: 0;
+  left: calc(50% - 5px);
+  width: 10px;
+  cursor: ns-resize;
+  border-top-style: solid;
+}
+
+.boardCardResizeBottom {
+  bottom: 0;
+  left: calc(50% - 5px);
+  width: 10px;
+  cursor: ns-resize;
+  border-bottom-style: solid;
+}
+
+.boardCardResizeRight {
+  top: calc(50% - 5px);
+  right: 0;
+  height: 10px;
+  cursor: ew-resize;
+  border-right-style: solid;
+}
+
+.boardCardResizeLeft {
+  top: calc(50% - 5px);
+  left: 0;
+  height: 10px;
+  cursor: ew-resize;
+  border-left-style: solid;
+}
