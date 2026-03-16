@@ -104,8 +104,8 @@ export function BoardGrid<T extends PropsWithChildren = PropsWithChildren>({
       const layout = saveJSONParse<LayoutItem<T>>(
         event.dataTransfer?.getData(dataTransferType),
       );
-      if (layout) {
-        // console.log(event.type, id, group, layout);
+      if (layout && (!resize || layoutsRef.current.findIndex((i) => i.i === layout.i) > -1)) {
+        console.log(event.type, id, group, layout,'resize',resize);
         if (layout?.i !== group) {
           setDragCardElement(layout);
           dragCardElementRef.current = layout;
@@ -121,10 +121,10 @@ export function BoardGrid<T extends PropsWithChildren = PropsWithChildren>({
     [group],
   );
   const onDragEnd = useCallback(
-    (_event: DragEvent) => {
-      // console.log(event.type, id, group, dragCardElementRef.current);
+    (event: DragEvent) => {
+      console.log(event.type, id, group, dragCardElementRef.current);
       setResize(null);
-      if (dragCardElementRef.current && onChange) {
+      if (dragCardElementRef.current && onChange && !resizeRef.current) {
         layoutsRef.current = layoutsRef.current.filter(
           (i) => i.i !== dragCardElementRef.current?.i,
         );
@@ -153,220 +153,245 @@ export function BoardGrid<T extends PropsWithChildren = PropsWithChildren>({
       window.removeEventListener('dragend', end);
     };
   }, [onDragEnd]);
+  
+   useEffect(() => {
+     const outerDrop = (event:DragEvent) => {
+      //  outDropRef.current = true;
+       setDragCardElement(undefined);
+       dragCardElementRef.current = undefined;
+       console.log('window drop');
+        event.preventDefault();
+        // event.stopPropagation();
+     };
+     const over = (event:DragEvent) => { 
+      console.log('window dragover');
+       event.preventDefault();
+     }
+     window.addEventListener('drop', outerDrop);
+     window.addEventListener('dragover', over);
+    return () => {
+      window.removeEventListener('dragover', outerDrop);
+      window.removeEventListener('dragover', over);
+    };
+  }, []);
 
   const dragOver = useCallback(
     (event: ReactDragEvent) => {
-      setDragCardElement((c) => {
-        if (!c) {
-          return c;
-        }
-        let {
-          h,
-          w,
-          x,
-          y,
-          maxH = current_rows,
-          minH = 1,
-          maxW = cols,
-          minW = 1,
-        } = c;
-        const maxX = cols - c.w;
-        const minX = 0;
-        const maxY = current_rows - c.h;
-        const minY = 0;
+      console.log(event.type,id, dragCardElementRef.current);
+      
+      // if (dragCardElementRef.current) {
+        setDragCardElement((c) => {
+          if (!c) {
+            return c;
+          }
+          let {
+            h,
+            w,
+            x,
+            y,
+            maxH = current_rows,
+            minH = 1,
+            maxW = cols,
+            minW = 1,
+          } = c;
+          const maxX = cols - c.w;
+          const minX = 0;
+          const maxY = current_rows - c.h;
+          const minY = 0;
 
-        // console.log({
-        //   ...c,
-        // });
+          console.log(event.type, id);
 
-        switch (resizeRef.current) {
-          case RESIZE.Bottom:
-            h = Math.min(
-              maxH,
-              Math.max(
-                minH,
-                Math.round(
-                  (event.nativeEvent.clientY + c.h * row_height - top) /
+          switch (resizeRef.current) {
+            case RESIZE.Bottom:
+              h = Math.min(
+                maxH,
+                Math.max(
+                  minH,
+                  Math.round(
+                    (event.nativeEvent.clientY + c.h * row_height - top) /
                     row_height,
-                ) -
+                  ) -
                   c.y -
                   c.h,
-              ),
-            );
-            break;
-          case RESIZE.BottomLeft:
-            h = Math.min(
-              maxH,
-              Math.max(
-                minH,
-                Math.round(
-                  (event.nativeEvent.clientY + c.h * row_height - top) /
+                ),
+              );
+              break;
+            case RESIZE.BottomLeft:
+              h = Math.min(
+                maxH,
+                Math.max(
+                  minH,
+                  Math.round(
+                    (event.nativeEvent.clientY + c.h * row_height - top) /
                     row_height,
-                ) -
+                  ) -
                   c.y -
                   c.h,
-              ),
-            );
-            x = Math.min(
-              c.x + c.w - 1,
-              Math.max(
-                minX,
-                Math.round((event.nativeEvent.clientX - left) / column_width),
-              ),
-            );
-            w = Math.min(maxW, Math.max(minW, c.w + (c.x - x)));
-            break;
-          case RESIZE.BottomRight:
-            w = Math.min(
-              maxW,
-              Math.max(
-                minW,
+                ),
+              );
+              x = Math.min(
+                c.x + c.w - 1,
+                Math.max(
+                  minX,
+                  Math.round((event.nativeEvent.clientX - left) / column_width),
+                ),
+              );
+              w = Math.min(maxW, Math.max(minW, c.w + (c.x - x)));
+              break;
+            case RESIZE.BottomRight:
+              w = Math.min(
+                maxW,
+                Math.max(
+                  minW,
 
-                Math.round(
-                  (event.nativeEvent.clientX + c.w * column_width - left) /
+                  Math.round(
+                    (event.nativeEvent.clientX + c.w * column_width - left) /
                     column_width,
-                ) -
+                  ) -
                   c.x -
                   c.w,
-              ),
-            );
-            h = Math.min(
-              maxH,
-              Math.max(
-                minH,
-                Math.round(
-                  (event.nativeEvent.clientY + c.h * row_height - top) /
+                ),
+              );
+              h = Math.min(
+                maxH,
+                Math.max(
+                  minH,
+                  Math.round(
+                    (event.nativeEvent.clientY + c.h * row_height - top) /
                     row_height,
-                ) -
+                  ) -
                   c.y -
                   c.h,
-              ),
-            );
-            break;
-          case RESIZE.Left:
-            x = Math.min(
-              c.x + c.w - 1,
-              Math.max(
-                minX,
-                Math.round((event.nativeEvent.clientX - left) / column_width),
-              ),
-            );
-            w = Math.min(maxW, Math.max(minW, c.w + (c.x - x)));
-            break;
-          case RESIZE.Right:
-            w = Math.min(
-              maxW,
-              Math.max(
-                minW,
+                ),
+              );
+              break;
+            case RESIZE.Left:
+              x = Math.min(
+                c.x + c.w - 1,
+                Math.max(
+                  minX,
+                  Math.round((event.nativeEvent.clientX - left) / column_width),
+                ),
+              );
+              w = Math.min(maxW, Math.max(minW, c.w + (c.x - x)));
+              break;
+            case RESIZE.Right:
+              w = Math.min(
+                maxW,
+                Math.max(
+                  minW,
 
-                Math.round(
-                  (event.nativeEvent.clientX + c.w * column_width - left) /
+                  Math.round(
+                    (event.nativeEvent.clientX + c.w * column_width - left) /
                     column_width,
-                ) -
+                  ) -
                   c.x -
                   c.w,
-              ),
-            );
-            break;
-          case RESIZE.Top:
-            y = Math.min(
-              c.y + c.h - 1,
-              Math.max(
-                minY,
-                Math.round((event.nativeEvent.clientY - top) / row_height),
-              ),
-            );
-            h = Math.min(maxH, Math.max(minH, c.h + (c.y - y)));
-            break;
-          case RESIZE.TopLeft:
-            y = Math.min(
-              c.y + c.h - 1,
-              Math.max(
-                minY,
-                Math.round((event.nativeEvent.clientY - top) / row_height),
-              ),
-            );
-            h = Math.min(maxH, Math.max(minH, c.h + (c.y - y)));
-            x = Math.min(
-              c.x + c.w - 1,
-              Math.max(
-                minX,
-                Math.round((event.nativeEvent.clientX - left) / column_width),
-              ),
-            );
-            w = Math.min(maxW, Math.max(minW, c.w + (c.x - x)));
-            break;
-          case RESIZE.TopRight:
-            y = Math.min(
-              c.y + c.h - 1,
-              Math.max(
-                minY,
-                Math.round((event.nativeEvent.clientY - top) / row_height),
-              ),
-            );
-            h = Math.min(maxH, Math.max(minH, c.h + (c.y - y)));
-            w = Math.min(
-              maxW,
-              Math.max(
-                minW,
+                ),
+              );
+              break;
+            case RESIZE.Top:
+              y = Math.min(
+                c.y + c.h - 1,
+                Math.max(
+                  minY,
+                  Math.round((event.nativeEvent.clientY - top) / row_height),
+                ),
+              );
+              h = Math.min(maxH, Math.max(minH, c.h + (c.y - y)));
+              break;
+            case RESIZE.TopLeft:
+              y = Math.min(
+                c.y + c.h - 1,
+                Math.max(
+                  minY,
+                  Math.round((event.nativeEvent.clientY - top) / row_height),
+                ),
+              );
+              h = Math.min(maxH, Math.max(minH, c.h + (c.y - y)));
+              x = Math.min(
+                c.x + c.w - 1,
+                Math.max(
+                  minX,
+                  Math.round((event.nativeEvent.clientX - left) / column_width),
+                ),
+              );
+              w = Math.min(maxW, Math.max(minW, c.w + (c.x - x)));
+              break;
+            case RESIZE.TopRight:
+              y = Math.min(
+                c.y + c.h - 1,
+                Math.max(
+                  minY,
+                  Math.round((event.nativeEvent.clientY - top) / row_height),
+                ),
+              );
+              h = Math.min(maxH, Math.max(minH, c.h + (c.y - y)));
+              w = Math.min(
+                maxW,
+                Math.max(
+                  minW,
 
-                Math.round(
-                  (event.nativeEvent.clientX + c.w * column_width - left) /
+                  Math.round(
+                    (event.nativeEvent.clientX + c.w * column_width - left) /
                     column_width,
-                ) -
+                  ) -
                   c.x -
                   c.w,
-              ),
-            );
-            break;
-        }
-        if (!resizeRef.current) {
-          x = Math.min(
-            maxX,
-            Math.max(
-              minX,
-              Math.round(
-                (event.nativeEvent.clientX - (c.w * column_width) / 2 - left) /
+                ),
+              );
+              break;
+          }
+          if (!resizeRef.current) {
+            x = Math.min(
+              maxX,
+              Math.max(
+                minX,
+                Math.round(
+                  (event.nativeEvent.clientX - (c.w * column_width) / 2 - left) /
                   column_width,
+                ),
               ),
-            ),
-          );
-          y = Math.min(
-            maxY,
-            Math.max(
-              minY,
-              Math.round(
-                (event.nativeEvent.clientY - (c.h * row_height) / 2 - top) /
+            );
+            y = Math.min(
+              maxY,
+              Math.max(
+                minY,
+                Math.round(
+                  (event.nativeEvent.clientY - (c.h * row_height) / 2 - top) /
                   row_height,
+                ),
               ),
-            ),
-          );
-        }
-        if (c.x === x && c.y === y && c.h === h && c.w === w) {
-          return c;
-        }
-        return {
-          ...c,
-          h,
-          w,
-          x,
-          y,
-        };
-      });
-      setDrag(true);
-      event.preventDefault();
-      event.stopPropagation();
+            );
+          }
+          if (c.x === x && c.y === y && c.h === h && c.w === w) {
+            return c;
+          }
+          return {
+            ...c,
+            h,
+            w,
+            x,
+            y,
+          };
+        });
+        setDrag(true);
+        event.preventDefault();
+        event.stopPropagation();
+      // }
     },
     [left, top, column_width, row_height, cols, current_rows],
   );
 
   const dragLeave = useCallback(() => {
-    setDrag(false);
+    if (!resizeRef.current) {
+      setDrag(false);
+    }
   }, []);
 
   const drop = useCallback(
     (event: ReactDragEvent) => {
-      // console.log('drop', id, drag, layoutsRef.current);
+      console.log('drop', id, drag, layoutsRef.current);
       let change = false;
       if (
         dragCardElement &&
@@ -396,6 +421,8 @@ export function BoardGrid<T extends PropsWithChildren = PropsWithChildren>({
   );
   const onChangeLayout = useCallback(
     (layout?: LayoutItem<T>) => {
+      console.log(id);
+      
       if (
         onChange &&
         layout &&
