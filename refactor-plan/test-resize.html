@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <style>
+        .container {
+            width: 500px;
+            height: 400px;
+            border: 2px solid red;
+            position: relative;
+            margin: 50px;
+        }
+
+        .box {
+            width: 200px;
+            height: 150px;
+            background: #eee;
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            border: 1px solid #ccc;
+            will-change: width, height;
+        }
+
+        .preview {
+            background: #dc9c9c7e;
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            border: 1px solid #ccc;
+            display: none;
+            pointer-events: none;
+        }
+
+        .handle {
+            width: 16px;
+            height: 16px;
+            border-right: 3px solid blue;
+            border-bottom: 3px solid blue;
+            position: absolute;
+            right: 4px;
+            bottom: 4px;
+            cursor: nwse-resize;
+            touch-action: none;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+        <div class="box">
+            <div class="handle"></div>
+        </div>
+        <div class="preview"></div>
+    </div>
+
+    <script>
+        const container = document.querySelector('.container');
+        const box = document.querySelector('.box');
+        const preview = document.querySelector('.preview');
+        const handle = document.querySelector('.handle');
+
+        const STEP = 100;
+        const MIN_W = 50;
+        const MIN_H = 50;
+
+        const clamp = (min, max, value) => Math.min(max, Math.max(min, value));
+        const stepFunc = (value) => Math.round(value / STEP) * STEP;
+
+        let startX, startY, startW, startH, maxW, maxH, steppedW, steppedH;
+
+        handle.addEventListener('pointerdown', (e) => {
+            handle.setPointerCapture(e.pointerId);
+
+            const cr = container.getBoundingClientRect();
+            const br = box.getBoundingClientRect();
+
+            startX = e.clientX;
+            startY = e.clientY;
+            startW = br.width;
+            startH = br.height;
+            maxW = cr.right - br.left - 24;
+            maxH = cr.bottom - br.top - 24;
+
+            steppedW = startW;
+            steppedH = startH;
+
+            preview.style.display = 'block';
+            preview.style.width = startW + 'px';
+            preview.style.height = startH + 'px';
+
+            e.preventDefault();
+        });
+
+        handle.addEventListener('pointermove', (e) => {
+            if (!handle.hasPointerCapture(e.pointerId)) return;
+
+            const rawW = clamp(MIN_W, maxW, startW + (e.clientX - startX));
+            const rawH = clamp(MIN_H, maxH, startH + (e.clientY - startY));
+
+            steppedW = clamp(MIN_W, maxW, stepFunc(rawW));
+            steppedH = clamp(MIN_H, maxH, stepFunc(rawH));
+
+            box.style.width = rawW + 'px';
+            box.style.height = rawH + 'px';
+            preview.style.width = steppedW + 'px';
+            preview.style.height = steppedH + 'px';
+        });
+
+        handle.addEventListener('pointerup', () => {
+            preview.style.display = 'none';
+            box.style.width = steppedW + 'px';
+            box.style.height = steppedH + 'px';
+        });
+    </script>
+
+</body>
+
+</html>
